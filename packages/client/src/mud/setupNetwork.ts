@@ -37,7 +37,7 @@ export async function setupNetwork() {
 
     const requestDrip = async () => {
       const balance = await signer.getBalance();
-      console.info(`[Dev Faucet]: Player balance -> ${balance}`);
+      console.log(`[Dev Faucet]: Player balance -> ${balance}`);
       const lowBalance = balance?.lte(utils.parseEther("1"));
       if (lowBalance) {
         console.info("[Dev Faucet]: Balance is low, dripping funds to player");
@@ -94,5 +94,6 @@ export async function setupNetwork() {
     worldContract,
     worldSend,
     fastTxExecutor,
+    signer
   };
 }

@@ -2,9 +2,16 @@ import { SetupContractConfig, getBurnerWallet } from "@latticexyz/std-client";
 import worldsJson from "contracts/worlds.json";
 import { supportedChains } from "./supportedChains";
 
+const params = new URLSearchParams(window.location.search);
+const worldAddress = Number(
+  params.get("worldAddress")
+);
+
 const worlds = worldsJson as Partial<
   Record<string, { address: string; blockNumber?: number }>
 >;
+
+(worlds["31337"] as any).address = worldAddress;
 
 type NetworkConfig = SetupContractConfig & {
   privateKey: string;
