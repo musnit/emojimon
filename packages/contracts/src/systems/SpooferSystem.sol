@@ -30,29 +30,31 @@ contract SpooferSystem is System {
     bytes memory callBytes,
     address spoofedSender
   ) external payable virtual returns (bytes memory) {
-    console.log("spoofCall");
+    console.log("Inside spoofCall");
     bytes4 callSignature = bytes4(callBytes[0]) | bytes4(callBytes[1]) >> 8 | bytes4(callBytes[2]) >> 16 | bytes4(callBytes[3]) >> 24;
 
     (bytes16 namespace, bytes16 name, bytes4 systemFunctionSelector) = FunctionSelectors.get(callSignature);
-    console.log("namespace: ");
-    console.logBytes16(namespace);
-    console.log("name: ");
-    console.logBytes16(name);
-    console.log("callSignature: ");
-    console.logBytes4(callSignature);
 
     if (namespace == 0 && name == 0) revert SpoofedFunctionSelectorNotFound(msg.sig);
 
-    console.log("found");
+    console.log("msg.data");
+    console.logBytes(msg.data);
+
+    console.log("callBytes");
+    console.logBytes(callBytes);
+
+    console.log("callSignature");
+    console.logBytes4(callSignature);
+
+    console.log("systemFunctionSelector");
+    console.logBytes4(systemFunctionSelector);
 
     // Replace function selector in the calldata with the system function selector
-    bytes memory callData = Bytes.setBytes4(msg.data, 0, systemFunctionSelector);
+    bytes memory callData = Bytes.setBytes4(callBytes, 0, systemFunctionSelector);
 
-    console.log("callData made");
+    console.log("callData");
+    console.logBytes(callData);
 
-    console.log("_call() with: ");
-    console.log("namespace: ");
-    console.logBytes16(namespace);
 
     // Call the function and forward the call value
     bytes memory returnData = _call(namespace, name, callData, msg.value, spoofedSender);
@@ -73,33 +75,19 @@ contract SpooferSystem is System {
     address spoofedSender
   ) internal virtual returns (bytes memory data) {
 
-    console.log("_call");
-
     // Load the system data
     bytes32 resourceSelector = ResourceSelector.from(namespace, name);
 
-    console.log("resourceSelector");
-    console.logBytes32(resourceSelector);
-
     (address systemAddress, bool publicAccess) = Systems.get(resourceSelector);
-
-    console.log("got it");
 
     // Check if the system exists
     if (systemAddress == address(0)) revert SpooferResourceNotFound(resourceSelector.toString());
 
-    console.log("got systemAddress: ");
-    console.log(systemAddress);
-
     // Allow access if the system is public or the caller has access to the namespace or name
     if (!publicAccess) AccessControl.requireAccess(namespace, name, spoofedSender);
 
-    console.log("access checked");
-
     // Get system hooks
     address[] memory hooks = SystemHooks.get(resourceSelector);
-
-    console.log("hooks got");
 
     // Call onBeforeCallSystem hooks (before calling the system)
     for (uint256 i; i < hooks.length; i++) {
@@ -107,19 +95,7 @@ contract SpooferSystem is System {
       hook.onBeforeCallSystem(spoofedSender, systemAddress, funcSelectorAndArgs);
     }
 
-    console.log("hooks done");
-
-    console.log("call with");
-    console.log("spoofedSender: ");
-    console.log(spoofedSender);
-    console.log("target: ");
-    console.log(systemAddress);
-    console.log("funcSelectorAndArgs: ");
-    console.logBytes(funcSelectorAndArgs);
-    console.log("delegate: ");
-    console.log(namespace == ROOT_NAMESPACE);
-    console.log("value: ");
-    console.log(value);
+    console.log("calling withSender");
 
     // Call the system and forward any return data
     data = withSender({
@@ -130,7 +106,6 @@ contract SpooferSystem is System {
       value: value
     });
 
-    console.log("call done");
     console.log("call done");
 
     // Call onAfterCallSystem hooks (after calling the system)
@@ -150,22 +125,34 @@ contract SpooferSystem is System {
     // Append msg.sender to the calldata
     bytes memory callData = abi.encodePacked(funcSelectorAndArgs, msgSender);
 
-    console.log("this");
+    console.log("this:");
     console.log(address(this));
+
+    console.log("target:");
+    console.log(target);
 
     console.log("callData");
     console.logBytes(callData);
 
-    // Call the target using `delegatecall` or `call`
-    (bool success, bytes memory data) = delegate
-      ? target.delegatecall(callData) // root system
-      : target.call{ value: value }(callData); // non-root system
+    console.log("funcSelectorAndArgs");
+    console.logBytes(funcSelectorAndArgs);
 
-    console.log("success");
+    console.log("delegate:");
+    console.log(delegate);
+
+    console.log("isContract");
+    console.log(isContract(target));
+
+    (bool success, bytes memory data) = delegate
+      ? target.delegatecall(funcSelectorAndArgs) // root system
+      : target.call{ value: value }(funcSelectorAndArgs); // non-root system
+
+    console.log("success:");
     console.log(success);
 
-    console.log("data");
+    console.log("data:");
     console.logBytes(data);
+
 
     // Forward returned data if the call succeeded
     if (success) return data;
@@ -176,5 +163,13 @@ contract SpooferSystem is System {
       revert(add(data, 0x20), mload(data))
     }
   }
+
+    function isContract(address _address) public view returns (bool){
+        uint32 size;
+        assembly {
+            size := extcodesize(_address)
+        }
+        return (size > 0);
+    }
 
 }
