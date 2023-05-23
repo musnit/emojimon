@@ -48,6 +48,7 @@ export function createSystemCalls(
 
     try {
       const tx = await worldSend("move", [x, y]);
+      console.log({movetx:tx})
       await awaitStreamValue(txReduced$, (txHash) => txHash === tx.hash);
     } finally {
       Position.removeOverride(positionId);

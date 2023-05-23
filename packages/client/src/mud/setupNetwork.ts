@@ -3,7 +3,7 @@ import { createFastTxExecutor, createFaucetService } from "@latticexyz/network";
 import { getNetworkConfig } from "./getNetworkConfig";
 import { defineContractComponents } from "./contractComponents";
 import { world } from "./world";
-import { Contract, Signer, utils } from "ethers";
+import { Contract, Signer, ethers, utils } from "ethers";
 import { JsonRpcProvider } from "@ethersproject/providers";
 import { IWorld__factory } from "contracts/types/ethers-contracts/factories/IWorld__factory";
 import storeConfig from "contracts/mud.config";
@@ -82,6 +82,20 @@ export async function setupNetwork() {
       if (!fastTxExecutor) {
         throw new Error("no signer");
       }
+
+      const abi = [
+        'function move(uint32,uint32)'
+    ];
+      const iface = new ethers.utils.Interface(abi);
+      const ethersSigHash = iface.getSighash('move');
+      console.log({ethersSigHash})
+
+      console.log({contract,ethersSigHash})
+      const [func] = args;
+      const populatedTx = await contract.populateTransaction[func as string](0, 3);
+      console.log(contract.interface)
+      console.log({func, populatedTx})
+
       const { tx } = await fastTxExecutor.fastTxExecute(contract, ...args);
       return await tx;
     };

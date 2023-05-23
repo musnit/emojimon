@@ -14,7 +14,7 @@ export const GameBoard = () => {
   const {
     components: { Encounter, MapConfig, Monster, Player, Position },
     network: { playerEntity, singletonEntity },
-    systemCalls: { f3Spawn },
+    systemCalls: { f3Spawn, spawn },
   } = useMUD();
 
   const canSpawn = useComponentValue(Player, playerEntity)?.value !== true;
@@ -63,7 +63,7 @@ export const GameBoard = () => {
       width={width}
       height={height}
       terrain={terrain}
-      onTileClick={canSpawn ? f3Spawn : undefined}
+      onTileClick={canSpawn ? spawn : undefined}
       players={player ? [player] : []}
       encounter={
         encounter ? (
