@@ -5,11 +5,9 @@ import { Encounter, EncounterData, Encounterable, EncounterTrigger, MapConfig, M
 import { MonsterType } from "../codegen/Types.sol";
 import { addressToEntityKey } from "../addressToEntityKey.sol";
 import { positionToEntityKey } from "../positionToEntityKey.sol";
-import { console } from "forge-std/console.sol";
 
 contract MapSystem is System {
   function spawn(uint32 x, uint32 y) public {
-    console.log("in spawn!!");
     bytes32 player = addressToEntityKey(address(_msgSender()));
     require(!Player.get(player), "already spawned");
 

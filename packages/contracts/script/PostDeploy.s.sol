@@ -71,10 +71,6 @@ contract PostDeploy is Script {
     MetaWorld metaWorld = new MetaWorld();
     console.log("Deployed metaWorld: ", address(metaWorld));
 
-    console.log("Testing metaWorld...");
-    metaWorld.f3Spawn();
-    console.log("Tested metaWorld!");
-
     vm.stopBroadcast();
   }
 }

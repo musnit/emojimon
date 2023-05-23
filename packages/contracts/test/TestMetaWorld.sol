@@ -2,7 +2,6 @@ pragma solidity >=0.8.0;
 
 import "forge-std/Test.sol";
 import "../src/MetaWorld.sol";
-import { console } from "forge-std/console.sol";
 
 contract TestMetaWorld is Test {
     MetaWorld metaWorld;
@@ -12,7 +11,6 @@ contract TestMetaWorld is Test {
     }
 
     function test_fullcall() public {
-        console.log("gogogo");
         metaWorld.f3Spawn();
     }
 }

@@ -11,7 +11,6 @@ import { FunctionSelectors } from "@latticexyz/world/src/modules/core/tables/Fun
 import { AccessControl } from "@latticexyz/world/src/AccessControl.sol";
 import { ISystemHook } from "@latticexyz/world/src/interfaces/ISystemHook.sol";
 import { Call } from "@latticexyz/world/src/Call.sol";
-import { console } from "forge-std/console.sol";
 
 bytes16 constant ROOT_NAMESPACE = 0;
 
@@ -30,31 +29,15 @@ contract SpooferSystem is System {
     bytes memory callBytes,
     address spoofedSender
   ) external payable virtual returns (bytes memory) {
-    console.log("Inside spoofCall");
+
     bytes4 callSignature = bytes4(callBytes[0]) | bytes4(callBytes[1]) >> 8 | bytes4(callBytes[2]) >> 16 | bytes4(callBytes[3]) >> 24;
 
     (bytes16 namespace, bytes16 name, bytes4 systemFunctionSelector) = FunctionSelectors.get(callSignature);
 
     if (namespace == 0 && name == 0) revert SpoofedFunctionSelectorNotFound(msg.sig);
 
-    console.log("msg.data");
-    console.logBytes(msg.data);
-
-    console.log("callBytes");
-    console.logBytes(callBytes);
-
-    console.log("callSignature");
-    console.logBytes4(callSignature);
-
-    console.log("systemFunctionSelector");
-    console.logBytes4(systemFunctionSelector);
-
-    // Replace function selector in the calldata with the system function selector
+    // Replace function selector in the requested callBytes with the system function selector
     bytes memory callData = Bytes.setBytes4(callBytes, 0, systemFunctionSelector);
-
-    console.log("callData");
-    console.logBytes(callData);
-
 
     // Call the function and forward the call value
     bytes memory returnData = _call(namespace, name, callData, msg.value, spoofedSender);
@@ -95,10 +78,8 @@ contract SpooferSystem is System {
       hook.onBeforeCallSystem(spoofedSender, systemAddress, funcSelectorAndArgs);
     }
 
-    console.log("calling withSender");
-
     // Call the system and forward any return data
-    data = withSender({
+    data = Call.withSender({
       msgSender: spoofedSender,
       target: systemAddress,
       funcSelectorAndArgs: funcSelectorAndArgs,
@@ -106,70 +87,11 @@ contract SpooferSystem is System {
       value: value
     });
 
-    console.log("call done");
-
     // Call onAfterCallSystem hooks (after calling the system)
     for (uint256 i; i < hooks.length; i++) {
       ISystemHook hook = ISystemHook(hooks[i]);
       hook.onAfterCallSystem(spoofedSender, systemAddress, funcSelectorAndArgs);
     }
   }
-
-  function withSender(
-    address msgSender,
-    address target,
-    bytes memory funcSelectorAndArgs,
-    bool delegate,
-    uint256 value
-  ) internal returns (bytes memory) {
-    // Append msg.sender to the calldata
-    bytes memory callData = abi.encodePacked(funcSelectorAndArgs, msgSender);
-
-    console.log("this:");
-    console.log(address(this));
-
-    console.log("target:");
-    console.log(target);
-
-    console.log("callData");
-    console.logBytes(callData);
-
-    console.log("funcSelectorAndArgs");
-    console.logBytes(funcSelectorAndArgs);
-
-    console.log("delegate:");
-    console.log(delegate);
-
-    console.log("isContract");
-    console.log(isContract(target));
-
-    (bool success, bytes memory data) = delegate
-      ? target.delegatecall(funcSelectorAndArgs) // root system
-      : target.call{ value: value }(funcSelectorAndArgs); // non-root system
-
-    console.log("success:");
-    console.log(success);
-
-    console.log("data:");
-    console.logBytes(data);
-
-
-    // Forward returned data if the call succeeded
-    if (success) return data;
-
-    // Forward error if the call failed
-    assembly {
-      // data+32 is a pointer to the error message, mload(data) is the length of the error message
-      revert(add(data, 0x20), mload(data))
-    }
-  }
-
-    function isContract(address _address) public view returns (bool){
-        uint32 size;
-        assembly {
-            size := extcodesize(_address)
-        }
-        return (size > 0);
-    }
 
 }

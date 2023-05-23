@@ -8,6 +8,4 @@ interface ISpooferSystem {
   error SpooferResourceNotFound(string resource);
 
   function spoofCall(bytes memory callBytes, address spoofedSender) external payable returns (bytes memory);
-
-  function isContract(address _address) external view returns (bool);
 }
