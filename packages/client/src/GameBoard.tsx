@@ -63,7 +63,7 @@ export const GameBoard = () => {
       width={width}
       height={height}
       terrain={terrain}
-      onTileClick={canSpawn ? spawn : undefined}
+      onTileClick={canSpawn ? f3Spawn : undefined}
       players={player ? [player] : []}
       encounter={
         encounter ? (

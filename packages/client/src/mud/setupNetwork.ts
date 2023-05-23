@@ -83,30 +83,33 @@ export async function setupNetwork() {
         throw new Error("no signer");
       }
 
-      const abi = [
-        'function move(uint32,uint32)'
-    ];
-      const iface = new ethers.utils.Interface(abi);
-      const ethersSigHash = iface.getSighash('move');
-      console.log({ethersSigHash})
-
-      console.log({contract,ethersSigHash})
-      const [func] = args;
-      const populatedTx = await contract.populateTransaction[func as string](0, 3);
-      console.log(contract.interface)
-      console.log({func, populatedTx})
-
       const { tx } = await fastTxExecutor.fastTxExecute(contract, ...args);
-      return await tx;
+      const result = await tx;
+
+      console.log({result})
+
+      return result;
     };
   }
 
   const worldSend = bindFastTxExecute(worldContract);
 
+  const METAWORLD_CONTRACT_ADDRESS = '0xE7FF84Df24A9a252B6E8A5BB093aC52B1d8bEEdf';
+  const METAWORLD_ABI = [
+    'function f3Spawn() external payable returns (bytes memory)',
+  ];
+  const metaWorldContract = new ethers.Contract
+    (METAWORLD_CONTRACT_ADDRESS,
+    METAWORLD_ABI,
+    signer ?? result.network.providers.get().json
+    );
+  const metaWorldSend = bindFastTxExecute(metaWorldContract);
+
   return {
     ...result,
     worldContract,
     worldSend,
+    metaWorldSend,
     fastTxExecutor,
     signer
   };

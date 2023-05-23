@@ -3,12 +3,11 @@ import { uuid, awaitStreamValue } from "@latticexyz/utils";
 import { MonsterCatchResult } from "../monsterCatchResult";
 import { ClientComponents } from "./createClientComponents";
 import { SetupNetworkResult } from "./setupNetwork";
-import {ethers} from 'ethers';
 
 export type SystemCalls = ReturnType<typeof createSystemCalls>;
 
 export function createSystemCalls(
-  { playerEntity, singletonEntity, worldSend, txReduced$, signer, network }: SetupNetworkResult,
+  { playerEntity, singletonEntity, worldSend, metaWorldSend, txReduced$, signer, network }: SetupNetworkResult,
   { Encounter, MapConfig, MonsterCatchAttempt, Obstruction, Player, Position }: ClientComponents
 ) {
   const wrapPosition = (x: number, y: number) => {
@@ -134,33 +133,7 @@ export function createSystemCalls(
 
     try {
 
-      const METAWORLD_CONTRACT_ADDRESS = '0xE7FF84Df24A9a252B6E8A5BB093aC52B1d8bEEdf';
-
-      const METAWORLD_ABI = [
-          'function f3Spawn() external payable returns (bytes memory)',
-      ];
-
-      // Create a new instance of the contract
-      const metaWorldContract = new ethers.Contract(METAWORLD_CONTRACT_ADDRESS, METAWORLD_ABI);
-
-      console.log({signer})
-
-      // Connect the signer to the contract
-      const contractWithSigner = metaWorldContract.connect(
-        signer ?? network.providers.get().json
-      );
-
-      const senderAddress = await network.signer.get()?.getAddress();
-      await network.providers.get().json.getBalance(senderAddress!).then((balance) => {
-        // Convert the balance from wei to ether and print it
-        const etherString = ethers.utils.formatEther(balance);
-        console.log('Balance: ', etherString);
-    });
-
-    const overrides = {
-      gasLimit: 21000,  // The gas limit you want to set
-  };
-      const response = await contractWithSigner.f3Spawn(overrides);
+      const response = await metaWorldSend('f3Spawn', []);
 
       const res = await response;
       console.log({res})
